@@ -1,113 +1,139 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import jMoment from "jalali-moment";
+import NavBar from "@/components/NavBar";
+import Modal from "@/components/Modal";
+import BookingResult from "@/components/BookingResult";
 
 export default function Home() {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [center, setCenter] = useState("jahad");
+  const [givenId, setGivenId] = useState(0);
+  const [bookingDate, setBookingDate] = useState("");
+  const [state, setState] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  async function postHandler(e: any) {
+    e.preventDefault();
+    try {
+      if (!name || !phone) {
+        setShowModal(true);
+        return;
+      }
+      const adjustedDate = getAdjustedDate();
+      const formattedDate = jMoment(adjustedDate)
+        .locale("fa")
+        .format("YYYY-MM-DD");
+
+      const newBookingItem = {
+        name: name,
+        phone: phone,
+        date: formattedDate,
+        centerId: center,
+        status: false,
+      };
+
+      const response = await fetch("/api/booking", {
+        method: "POST",
+        body: JSON.stringify(newBookingItem),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setState(true);
+        setGivenId(data.id);
+        setBookingDate(data.date);
+        console.log("New booking item created:", data);
+      } else {
+        const errorData = await response.json();
+        console.error("Error:", errorData.error);
+        alert(errorData.error);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("An error occurred, please try again later.");
+    }
+  }
+
+  // convert time with Iran (UTC +3:30)
+  function getAdjustedDate() {
+    const currentDate = new Date();
+    const timeDifference = (3 * 60 + 30) * 60 * 1000;
+    const adjustedDate = new Date(currentDate.getTime() + timeDifference);
+    return adjustedDate;
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+    <>
+      <header>
+        <NavBar />
+      </header>
+      <main className="h-[94svh] bg-gradient-to-b from-[#30CCCE] to-[#330A68] flex flex-col gap-2 items-center justify-center">
+        {!state ? (
+          <>
+            <form
+              onSubmit={postHandler}
+              className="flex rounded flex-col gap-5 py-10 px-6 bg-white shadow-md justify-center w-[95%] md:w-[350px]"
+            >
+              <h1 className="text-xl text-center font-bold">
+                اطلاعات خود را وارد نمایید
+              </h1>
+              <input
+                className="p-2 text-xs rounded border w-full focus:outline-[#330a68]"
+                type="text"
+                name="name"
+                placeholder="نام خود را وارد نمایید"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                pattern="^[\u0600-\u06FF]+(\s[\u0600-\u06FF]+)+$"
+                title="نام و نام خانوادگی خود را وارد کنید"
+                required
+              />
+              <input
+                className="p-2 text-xs placeholder:text-right rounded border w-full focus:outline-[#330a68]"
+                type="tel"
+                pattern="^\d{11}$"
+                required
+                placeholder="شماره تماس خود را وارد نمایید"
+                title="شماره تماس را به درستی وارد نمایید"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              <select
+                className="p-2 rounded text-xs border w-full focus:outline-[#330a68]"
+                value={center}
+                onChange={(e) => setCenter(e.target.value)}
+              >
+                <option value={"jahad"}>دفتر پیشخوان میدان جهاد</option>
+                <option value={"daraee"}>دفتر پیشخوان میدان دارایی</option>
+              </select>
+              <button
+                type="submit"
+                className="bg-[#330a68] text-white rounded p-2"
+              >
+                رزرو نوبت
+              </button>
+            </form>
+          </>
+        ) : (
+          <BookingResult
+            id={givenId}
+            date={jMoment(bookingDate).format("YYYY/MM/DD")}
+          />
+        )}
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+        {showModal && (
+          <Modal
+            onClick={() => setShowModal(false)}
+            message={"لطفا موارد خواسته شده را وارد نمایید"}
+          />
+        )}
+      </main>
+    </>
   );
 }

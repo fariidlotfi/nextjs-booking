@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const vazir = Vazirmatn({ subsets: ["arabic"] });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -15,8 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="fa" dir="rtl">
+      <body
+        className={`bg-gradient-to-b min-h-[100svh] from-[#30CCCE] to-[#330A68] ${vazir.className}`}
+      >
+        {children}
+      </body>
     </html>
   );
 }
