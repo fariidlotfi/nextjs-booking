@@ -31,8 +31,8 @@ To run this application locally, follow these steps:
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/your-username/simple-booking-app.git
-   cd simple-booking-app
+   git clone https://github.com/fariidlotfi/nextjs-booking
+   cd nextjs-booking
 
    ```
 
