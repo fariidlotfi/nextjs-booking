@@ -16,7 +16,7 @@ interface IBookingData {
 const AllBooking: React.FC = () => {
   const [bookings, setBookings] = useState<IBookingData[]>([]);
   const [center, setCenter] = useState<string>("jahad");
-  const [selectedDate, setSelectedDate] = useState(
+  const [selectedDate, setSelectedDate] = useState<string>(
     jMoment().format("jYYYY-jMM-jDD")
   );
 

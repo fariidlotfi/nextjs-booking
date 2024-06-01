@@ -1,21 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import jMoment from "jalali-moment";
 import NavBar from "@/components/NavBar";
 import Modal from "@/components/Modal";
 import BookingResult from "@/components/BookingResult";
+import { getAdjustedDate } from "@/utils/getAdjustedDate";
+
+interface BookingResponse {
+  id: number;
+  date: string;
+}
 
 export default function Home() {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [center, setCenter] = useState("jahad");
-  const [givenId, setGivenId] = useState(0);
-  const [bookingDate, setBookingDate] = useState("");
-  const [state, setState] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [name, setName] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [center, setCenter] = useState<string>("jahad");
+  const [givenId, setGivenId] = useState<number>(0);
+  const [bookingDate, setBookingDate] = useState<string>("");
+  const [state, setState] = useState<boolean>(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
 
-  async function postHandler(e: any) {
+  async function postHandler(e: FormEvent) {
     e.preventDefault();
     try {
       if (!name || !phone) {
@@ -44,7 +50,7 @@ export default function Home() {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data: BookingResponse = await response.json();
         setState(true);
         setGivenId(data.id);
         setBookingDate(data.date);
@@ -58,14 +64,6 @@ export default function Home() {
       console.error("Error:", error);
       alert("An error occurred, please try again later.");
     }
-  }
-
-  // convert time with Iran (UTC +3:30)
-  function getAdjustedDate() {
-    const currentDate = new Date();
-    const timeDifference = (3 * 60 + 30) * 60 * 1000;
-    const adjustedDate = new Date(currentDate.getTime() + timeDifference);
-    return adjustedDate;
   }
 
   return (
